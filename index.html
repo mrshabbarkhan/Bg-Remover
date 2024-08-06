@@ -11,27 +11,72 @@
       integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
       crossorigin="anonymous"
     />
+    <style>
+      h1 {
+        text-align: center;
+        color: #ffc107;
+      }
+      .div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem;
+      }
+      img {
+        width: 50vh;
+        height: 50vh;
+        border: 1px solid #ffc107;
+      }
+      .flex {
+        display: flex;
+      }
+      .loading-text {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 1rem;
+      }
+    </style>
   </head>
   <body>
     <div class="container mt-4">
       <div class="row mt-4">
         <div class="col-md-12 card mt-4">
           <form>
+            <h1>Bg Cleaner</h1>
             <div class="form-group">
               <label for="fileInput">Select a File: </label>
-              <input id="fileInput" class="form-control" type="file" />
+              <input required id="fileInput" class="form-control" type="file" />
             </div>
-            <input
-              class="btn btn-primary m-1"
-              type="button"
-              onclick="submitHandler()"
-              value="Upload"
-            />
+            <div class="flex">
+              <input
+                required
+                class="btn btn-primary m-1"
+                type="button"
+                onclick="submitHandler()"
+                value="Upload"
+              />
+              <button
+                class="btn btn-warning"
+                id="downloadButton"
+                style="display: none"
+                onclick="downloadFile()"
+              >
+                Download
+              </button>
+            </div>
           </form>
-
-          <button class="btn btn-warning" onclick="downloadFile()">
+          <div class="loading-text" id="loadingText" style="display: none">
+            Uploading...
+          </div>
+          <button
+            class="btn btn-warning"
+            id="downloadButton"
+            style="display: none"
+            onclick="downloadFile()"
+          >
             Download
           </button>
+          <div class="div"></div>
         </div>
       </div>
     </div>
@@ -54,19 +99,28 @@
 
     <script>
       let imageURL;
+      let div = document.querySelector(".div");
+      let loadingText = document.getElementById("loadingText");
+      let downloadButton = document.getElementById("downloadButton");
 
       function submitHandler() {
         console.log("click");
         const fileInput = document.getElementById("fileInput");
-        console.log(fileInput.files);
         const image = fileInput.files[0];
+
+        if (!image) {
+          return;
+        }
+
+        // Show loading text and hide previous image and download button
+        loadingText.style.display = "block";
+        downloadButton.style.display = "none";
+        div.innerHTML = "";
 
         // Multipart file
         const formData = new FormData();
         formData.append("image_file", image);
         formData.append("size", "auto");
-
-        const apiKey = "PASTE_YOUR_API_KEY";
 
         fetch("https://api.remove.bg/v1.0/removebg", {
           method: "POST",
@@ -75,24 +129,33 @@
           },
           body: formData,
         })
-          .then(function (reponse) {
-            return reponse.blob();
+          .then(function (response) {
+            return response.blob();
           })
           .then(function (blob) {
-            console.log(blob);
+            // Hide loading text
+            loadingText.style.display = "none";
+
             const url = URL.createObjectURL(blob);
             imageURL = url;
             const img = document.createElement("img");
             img.src = url;
-            document.body.appendChild(img);
+            div.appendChild(img);
+
+            // Show download button
+            downloadButton.style.display = "block";
           })
-          .catch();
+          .catch(function (error) {
+            console.error("Error:", error);
+            // Hide loading text if there's an error
+            loadingText.style.display = "none";
+          });
       }
 
       function downloadFile() {
         var anchorElement = document.createElement("a"); //<a></a>
         anchorElement.href = imageURL;
-        anchorElement.download = "naciasv.png";
+        anchorElement.download = "image.png";
         document.body.appendChild(anchorElement);
 
         anchorElement.click();
